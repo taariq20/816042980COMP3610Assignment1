@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import joblib
 
 st.set_page_config(
     page_title="NYC Taxi Visualization Dashboard",
@@ -17,16 +18,7 @@ Use the filters in the sidebar to dynamically explore the dataset.
 
 @st.cache_data
 def load_data():
-    df = pd.read_parquet("taxi_data.parquet")
-
-    df["pickup_hour"] = df["tpep_pickup_datetime"].dt.hour
-    df["pickup_date"] = df["tpep_pickup_datetime"].dt.date
-    df["day_of_week"] = df["tpep_pickup_datetime"].dt.day_name()
-
-    df["trip_duration"] = (
-        df["tpep_dropoff_datetime"] - df["tpep_pickup_datetime"]
-    ).dt.total_seconds() / 60
-
+    df = joblib.load("df_clean.joblib")
     return df
 
 df = load_data()
