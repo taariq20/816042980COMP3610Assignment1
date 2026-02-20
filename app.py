@@ -142,7 +142,7 @@ st.subheader("Top 10 Pickup Zones by Trip Count")
 top_zones = filtered["PU_Zone"].value_counts().head(10).reset_index()
 top_zones.columns = ["Zone", "Trips"]
 fig1 = px.bar(top_zones, x="Zone", y="Trips", color="Trips", title="Top 10 Pickup Zones")
-st.plotly_chart(fig1, use_container_width=True)
+st.plotly_chart(fig1, width="stretch")
 st.markdown("""
 Most trips originate from Midtown Manhattan and JFK airport, highlighting commuter and airport demand.
 Business districts see consistently high pickup counts during weekdays.
@@ -153,7 +153,7 @@ Residential neighborhoods appear less frequently, indicating shorter local trips
 st.subheader("Average Fare by Hour")
 hourly_fare = filtered.groupby("pickup_hour")["fare_amount"].mean().reset_index()
 fig2 = px.line(hourly_fare, x="pickup_hour", y="fare_amount", markers=True, title="Average Fare by Hour")
-st.plotly_chart(fig2, use_container_width=True)
+st.plotly_chart(fig2, width="stretch")
 st.markdown("""
 Fares spike during morning (7–9 AM) and evening (5–8 PM) rush hours due to traffic and longer trip distances.
 Late-night hours (11 PM–2 AM) show elevated fares, likely driven by surge pricing and longer airport trips.
@@ -164,7 +164,7 @@ Midday fares are generally lower, reflecting shorter trips and lighter traffic c
 st.subheader("Trip Distance Distribution (0–25 miles)")
 filtered_distance = filtered[(filtered["trip_distance"] >= 0) & (filtered["trip_distance"] <= 25)]
 fig3 = px.histogram(filtered_distance, x="trip_distance", nbins=40, title="Trip Distance Distribution")
-st.plotly_chart(fig3, use_container_width=True)
+st.plotly_chart(fig3, width="stretch")
 st.markdown("""
 Most trips are under 5 miles, indicating a predominance of short urban rides.
 Trips between 10–20 miles are relatively rare and often correspond to airport or outer-borough travel.
@@ -176,7 +176,7 @@ st.subheader("Payment Type Breakdown")
 pay_counts = filtered["payment_type"].value_counts().reset_index()
 pay_counts.columns = ["Payment Type","Count"]
 fig4 = px.pie(pay_counts, names="Payment Type", values="Count", title="Payment Types")
-st.plotly_chart(fig4, use_container_width=True)
+st.plotly_chart(fig4, width="stretch")
 st.markdown("""
 Card payments (credit/debit) dominate taxi transactions.
 Cash payments remain a minority, often associated with tourists or infrequent riders.
@@ -196,7 +196,7 @@ fig5 = px.density_heatmap(
     title="Trips by Day of Week and Hour",
     color_continuous_scale="Viridis"
 )
-st.plotly_chart(fig5, use_container_width=True)
+st.plotly_chart(fig5, width="stretch")
 st.markdown("""
 Weekday peaks occur during 7–9 AM and 5–8 PM, consistent with commuter traffic patterns.
 Weekends show late-night activity (11 PM–2 AM), likely driven by nightlife and airport trips.
