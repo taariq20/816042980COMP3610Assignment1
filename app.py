@@ -51,45 +51,43 @@ df = pd.read_parquet(trip_file)
 initial_rows = df.shape[0]
 
 # Remove nulls
-df_clean = df.dropna(subset=[
+df = df.dropna(subset=[
     "tpep_pickup_datetime",
     "tpep_dropoff_datetime",
     "PULocationID",
     "DOLocationID",
     "fare_amount"
 ])
-after_nulls = df_clean.shape[0]
+after_nulls = df.shape[0]
 
 # Remove invalid trips
-df_clean = df_clean[
-    (df_clean["trip_distance"] > 0) &
-    (df_clean["fare_amount"] > 0) &
-    (df_clean["fare_amount"] <= 500)
+df = df[
+    (df["trip_distance"] > 0) &
+    (df["fare_amount"] > 0) &
+    (df["fare_amount"] <= 500)
 ]
-after_invalid = df_clean.shape[0]
+after_invalid = df.shape[0]
 
 # Remove trips with invalid timestamps
-df_clean = df_clean[
-    df_clean["tpep_dropoff_datetime"] > df_clean["tpep_pickup_datetime"]
+df = df[
+    df["tpep_dropoff_datetime"] > df["tpep_pickup_datetime"]
 ]
-final_rows = df_clean.shape[0]
+final_rows = df.shape[0]
 
 # Feature engineering
-df_clean = df_clean.copy()
-df_clean["pickup_hour"] = df_clean["tpep_pickup_datetime"].dt.hour
-df_clean["pickup_date"] = df_clean["tpep_pickup_datetime"].dt.date
-df_clean["pickup_day_of_week"] = df_clean["tpep_pickup_datetime"].dt.day_name()
-df_clean["trip_duration_minutes"] = (
-    (df_clean["tpep_dropoff_datetime"] - df_clean["tpep_pickup_datetime"]).dt.total_seconds() / 60
+df["pickup_hour"] = df["tpep_pickup_datetime"].dt.hour
+df["pickup_date"] = df["tpep_pickup_datetime"].dt.date
+df["pickup_day_of_week"] = df["tpep_pickup_datetime"].dt.day_name()
+df["trip_duration_minutes"] = (
+    (df["tpep_dropoff_datetime"] - df["tpep_pickup_datetime"]).dt.total_seconds() / 60
 )
-df_clean["revenue"] = df_clean["fare_amount"]
 
 # Merge zone names
-df_clean = df_clean.merge(
+df = df.merge(
     df_zones[["LocationID","Zone"]], left_on="PULocationID", right_on="LocationID",
     how="left"
 ).rename(columns={"Zone":"PU_Zone"})
-df_clean = df_clean.merge(
+df = df.merge(
     df_zones[["LocationID","Zone"]], left_on="DOLocationID", right_on="LocationID",
     how="left"
 ).rename(columns={"Zone":"DO_Zone"})
@@ -108,17 +106,17 @@ hour_range = st.sidebar.slider("Select Hour Range", 0, 23, (0, 23))
 # Payment types
 payment_types = st.sidebar.multiselect(
     "Payment Types",
-    options=df_clean["payment_type"].unique(),
-    default=df_clean["payment_type"].unique()
+    options=df["payment_type"].unique(),
+    default=df["payment_type"].unique()
 )
 
 # Apply filters
-filtered = df_clean[
-    (df_clean["pickup_date"] >= start_date) &
-    (df_clean["pickup_date"] <= end_date) &
-    (df_clean["pickup_hour"] >= hour_range[0]) &
-    (df_clean["pickup_hour"] <= hour_range[1]) &
-    (df_clean["payment_type"].isin(payment_types))
+filtered = df[
+    (df["pickup_date"] >= start_date) &
+    (df["pickup_date"] <= end_date) &
+    (df["pickup_hour"] >= hour_range[0]) &
+    (df["pickup_hour"] <= hour_range[1]) &
+    (df["payment_type"].isin(payment_types))
 ]
 
 if filtered.empty:
@@ -131,7 +129,7 @@ st.subheader("Key Metrics")
 col1, col2, col3, col4, col5 = st.columns(5)
 col1.metric("Total Trips", f"{len(filtered):,}")
 col2.metric("Average Fare", f"${filtered['fare_amount'].mean():.2f}")
-col3.metric("Total Revenue", f"${filtered['revenue'].sum():,.2f}")
+col3.metric("Total Revenue", f"${filtered['fare_amount'].sum():,.2f}")
 col4.metric("Avg Distance (mi)", f"{filtered['trip_distance'].mean():.2f}")
 col5.metric("Avg Duration (min)", f"{filtered['trip_duration_minutes'].mean():.2f}")
 
@@ -144,9 +142,9 @@ top_zones.columns = ["Zone", "Trips"]
 fig1 = px.bar(top_zones, x="Zone", y="Trips", color="Trips", title="Top 10 Pickup Zones")
 st.plotly_chart(fig1, width="stretch")
 st.markdown("""
-Most trips originate from Midtown Manhattan and JFK airport, highlighting commuter and airport demand.
-Business districts see consistently high pickup counts during weekdays.
-Residential neighborhoods appear less frequently, indicating shorter local trips are less common.
+Trips are highest in Midtown Center, JFK Airport, Upper East Side North and South which is expected since 
+they are major commercial districts and an airport which assists a large number of tourists. Upper west side is also
+mostly a residential area which is why they are shown to be on the lower end of the bar chart.
 """)
 
 # Average Fare by Hour
@@ -155,9 +153,8 @@ hourly_fare = filtered.groupby("pickup_hour")["fare_amount"].mean().reset_index(
 fig2 = px.line(hourly_fare, x="pickup_hour", y="fare_amount", markers=True, title="Average Fare by Hour")
 st.plotly_chart(fig2, width="stretch")
 st.markdown("""
-Fares spike during morning (7–9 AM) and evening (5–8 PM) rush hours due to traffic and longer trip distances.
-Late-night hours (11 PM–2 AM) show elevated fares, likely driven by surge pricing and longer airport trips.
-Midday fares are generally lower, reflecting shorter trips and lighter traffic conditions.
+Fares spike in the morning from 3–5 AM which is likely due to citizens needing to reach to work early in the morning.
+There is also a significant increase in fares from 2–4 PM which is probably due to citizens returning home from work.
 """)
 
 # Trip Distance Distribution (0-25 miles)
@@ -166,9 +163,8 @@ filtered_distance = filtered[(filtered["trip_distance"] >= 0) & (filtered["trip_
 fig3 = px.histogram(filtered_distance, x="trip_distance", nbins=40, title="Trip Distance Distribution")
 st.plotly_chart(fig3, width="stretch")
 st.markdown("""
-Most trips are under 5 miles, indicating a predominance of short urban rides.
-Trips between 10–20 miles are relatively rare and often correspond to airport or outer-borough travel.
-Very long trips above 30 miles are extremely uncommon but generate proportionally higher revenue per ride.
+Majority of trips are below 5 miles, showing that most taxi rides are short trips possibly in cities.
+Trips between 10–20 miles are rare and most likely correspond to long travels from airports.
 """)
 
 # Payment Type Breakdown
@@ -178,9 +174,8 @@ pay_counts.columns = ["Payment Type","Count"]
 fig4 = px.pie(pay_counts, names="Payment Type", values="Count", title="Payment Types")
 st.plotly_chart(fig4, width="stretch")
 st.markdown("""
-Card payments (credit/debit) dominate taxi transactions.
-Cash payments remain a minority, often associated with tourists or infrequent riders.
-The distribution is stable throughout the day, with no significant spikes for a particular payment type.
+Card payments dominate the taxi transactions.
+Cash payments are seen to be minority and are likely associated with tourists.
 """)
 
 # Trips by Day of Week and Hour
@@ -198,7 +193,6 @@ fig5 = px.density_heatmap(
 )
 st.plotly_chart(fig5, width="stretch")
 st.markdown("""
-Weekday peaks occur during 7–9 AM and 5–8 PM, consistent with commuter traffic patterns.
-Weekends show late-night activity (11 PM–2 AM), likely driven by nightlife and airport trips.
-Monday mornings and Friday evenings exhibit the highest overall trip volumes, reflecting work-related travel trends.
+Pickup hours from 3-7pm on weekdays show the highest trip counts, likely due to people returning home from work.
+Whereas, early morning trips from 12-5 am are more common on weekends, possibly due to people returning from nightlife activities and early morning airport trips.
 """)
