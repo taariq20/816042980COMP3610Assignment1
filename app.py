@@ -175,7 +175,7 @@ fig1 = px.bar(
     x="PU_Zone", y="Trips", color="Trips",
     title="Top 10 Pickup Zones by Trip Count"
 )
-st.plotly_chart(fig1, width=True)
+st.plotly_chart(fig1, use_container_width=True)
 st.markdown("""
 Trips are highest in Midtown Center, JFK Airport, Upper East Side North and South, which is expected since
 they are major commercial districts and an airport which serves many tourists.
@@ -190,7 +190,7 @@ fig2 = px.line(
     markers=True,
     title="Average Fare by Hour of Day"
 )
-st.plotly_chart(fig2, width=True)
+st.plotly_chart(fig2, use_container_width=True)
 st.markdown("""
 Fares spike in the morning from 3–5 AM which is likely due to citizens needing to reach work early in the morning.
 There is also a significant increase in fares from 2–4 PM which is probably due to citizens returning home from work.
@@ -203,7 +203,7 @@ fig3 = px.histogram(
     x="trip_distance", nbins=40,
     title="Trip Distance Distribution (0–25 miles)"
 )
-st.plotly_chart(fig3, width=True)
+st.plotly_chart(fig3, use_container_width=True)
 st.markdown("""
 Majority of trips are below 5 miles, showing that most taxi rides are short trips within the city.
 Trips between 10–20 miles are rare and most likely correspond to long-distance airport travel.
@@ -216,7 +216,7 @@ fig4 = px.pie(
     names="payment_type", values="Count",
     title="Payment Type Breakdown"
 )
-st.plotly_chart(fig4, width=True)
+st.plotly_chart(fig4, use_container_width=True)
 st.markdown("""
 Card payments dominate taxi transactions.
 Cash payments are a minority and are likely associated with tourists or older demographics.
@@ -238,7 +238,7 @@ fig5 = px.density_heatmap(
     color_continuous_scale="Viridis",
     title="Trips by Day of Week and Hour"
 )
-st.plotly_chart(fig5, width=True)
+st.plotly_chart(fig5, use_container_width=True)
 st.markdown("""
 Pickup hours from 3–7 PM on weekdays show the highest trip counts, likely due to people returning home from work.
 Early morning trips from 12–5 AM are more common on weekends, possibly due to nightlife and early airport trips.
