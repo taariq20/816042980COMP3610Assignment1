@@ -7,14 +7,14 @@ import plotly.express as px
 # Page setup
 
 st.set_page_config(
-    page_title="NYC Yellow Taxi Trip Dashboard",
+    page_title="NYC Yellow Taxi Trip Dashboard (January 2024)",
     layout="wide"
 )
 
-st.title("🚕 NYC Yellow Taxi Trip Dashboard (January 2024)")
+st.title("NYC Yellow Taxi Trip Dashboard for January 2024")
 st.markdown("""
-Explore NYC yellow taxi trips for January 2024.  
-Use the sidebar filters to explore trip patterns, fares, distances, and revenue.
+Analyse NYC yellow taxi trips using this dashboard for trips made in January 2024.
+Filter by date, hour, and payment type to depict pickup locations, trip distances and revenue analytics.
 """)
 
 # Data paths & download
