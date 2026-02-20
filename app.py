@@ -124,22 +124,22 @@ st.subheader("Top 10 Pickup Zones by Trip Count")
 top_zones = filtered["PU_Zone"].value_counts().head(10).reset_index()
 top_zones.columns = ["Zone", "Trips"]
 fig1 = px.bar(top_zones, x="Zone", y="Trips", color="Trips")
-st.plotly_chart(fig1, use_container_width=True)
+st.plotly_chart(fig1, width="stretch")
 
 st.subheader("Average Fare by Hour of Day")
 hourly_fare = filtered.groupby("pickup_hour")["fare_amount"].mean().reset_index()
 fig2 = px.line(hourly_fare, x="pickup_hour", y="fare_amount", markers=True)
-st.plotly_chart(fig2, use_container_width=True)
+st.plotly_chart(fig2, width="stretch")
 
 st.subheader("Distribution of Trip Distances")
 fig3 = px.histogram(filtered, x="trip_distance", nbins=40)
-st.plotly_chart(fig3, use_container_width=True)
+st.plotly_chart(fig3, width="stretch")
 
 st.subheader("Payment Type Breakdown")
 pay_counts = filtered["payment_type"].value_counts().reset_index()
 pay_counts.columns = ["Payment Type", "Count"]
 fig4 = px.pie(pay_counts, names="Payment Type", values="Count")
-st.plotly_chart(fig4, use_container_width=True)
+st.plotly_chart(fig4, width="stretch")
 
 st.subheader("Trips by Day of Week and Hour")
 heatmap_data = filtered.groupby(
@@ -161,4 +161,4 @@ fig5 = px.density_heatmap(
     y="pickup_day_of_week",
     z="Trips"
 )
-st.plotly_chart(fig5, use_container_width=True)
+st.plotly_chart(fig5, width="stretch")
