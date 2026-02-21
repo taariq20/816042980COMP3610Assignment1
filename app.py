@@ -90,7 +90,7 @@ def load_data(trip_file: str, zone_file: str) -> pl.DataFrame:
 
 # Pre-aggregate the full dataset into small summary tables — cached once at startup.
 # Filter interactions then run against these tiny tables instead of 2.8M rows.
-@st.cache_data
+@st.cache_data(show_spinner="Pre-aggregating data...")
 def precompute_summaries(_df: pl.DataFrame) -> dict:
     lf = _df.lazy()
     metrics_lf = lf.group_by(
