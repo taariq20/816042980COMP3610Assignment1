@@ -93,6 +93,7 @@ def load_data(trip_file: str, zone_file: str) -> pl.DataFrame:
 @st.cache_data
 def precompute_summaries(_df: pl.DataFrame) -> dict:
     lf = _df.lazy()
+
     metrics_lf = lf.group_by(
         ["pickup_date", "pickup_hour", "pickup_day_of_week", "payment_type"]
     ).agg([
@@ -106,23 +107,26 @@ def precompute_summaries(_df: pl.DataFrame) -> dict:
         ["pickup_date", "pickup_hour", "payment_type", "PU_Zone"]
     ).agg(pl.len().alias("Trips"))
 
-    distance_lf = lf.filter(
-        pl.col("trip_distance").is_between(0, 25)
-    ).with_columns(
-        (pl.col("trip_distance") / 0.625).floor().cast(pl.Int32).alias("dist_bin")
-    ).group_by(["pickup_date", "pickup_hour", "payment_type", "dist_bin"]).agg(
-        pl.len().alias("count")
-    )
-
-    metrics_summary, zones_summary, distance_summary = pl.collect_all(
-        [metrics_lf, zones_lf, distance_lf]
+    metrics_summary, zones_summary = pl.collect_all(
+        [metrics_lf, zones_lf]
     )
 
     return {
-        "metrics":  metrics_summary,
-        "zones":    zones_summary,
-        "distance": distance_summary,
+        "metrics": metrics_summary,
+        "zones":   zones_summary,
     }
+
+
+@st.cache_data
+def get_distance_data(start_date, end_date, hour_min, hour_max, payment_types):
+    return df.filter(
+        (pl.col("pickup_date") >= start_date) &
+        (pl.col("pickup_date") <= end_date) &
+        (pl.col("pickup_hour") >= hour_min) &
+        (pl.col("pickup_hour") <= hour_max) &
+        (pl.col("payment_type").is_in(list(payment_types))) &
+        (pl.col("trip_distance") <= 25)
+    ).select("trip_distance")
 
 
 df = load_data(trip_file, zone_file)
@@ -155,9 +159,8 @@ def filter_summary(tbl: pl.DataFrame) -> pl.DataFrame:
         (pl.col("payment_type").is_in(payment_types))
     )
 
-filtered_metrics  = filter_summary(summaries["metrics"])
-filtered_zones    = filter_summary(summaries["zones"])
-filtered_distance = filter_summary(summaries["distance"])
+filtered_metrics = filter_summary(summaries["metrics"])
+filtered_zones   = filter_summary(summaries["zones"])
 
 if filtered_metrics.is_empty():
     st.warning("No data for the selected filters.")
@@ -223,13 +226,8 @@ There is also a significant increase in fares from 2–4 PM which is probably du
 
 # Trip Distance Distribution
 st.subheader("Trip Distance Distribution (0–25 miles)")
-distance_raw = df.filter(
-    (pl.col("pickup_date") >= start_date) &
-    (pl.col("pickup_date") <= end_date) &
-    (pl.col("pickup_hour") >= hour_range[0]) &
-    (pl.col("pickup_hour") <= hour_range[1]) &
-    (pl.col("payment_type").is_in(payment_types)) &
-    (pl.col("trip_distance") <= 25)
+distance_raw = get_distance_data(
+    start_date, end_date, hour_range[0], hour_range[1], tuple(sorted(payment_types))
 )
 fig3 = px.histogram(
     distance_raw,
