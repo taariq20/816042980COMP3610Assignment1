@@ -88,7 +88,8 @@ def load_data(trip_file: str, zone_file: str) -> pl.DataFrame:
     return df
 
 
-# Pre-aggregate the full dataset into small summary tables
+# Pre-aggregate the full dataset into small summary tables — cached once at startup.
+# Filter interactions then run against these tiny tables instead of 2.8M rows.
 @st.cache_data
 def precompute_summaries(_df: pl.DataFrame) -> dict:
     lf = _df.lazy()
@@ -105,13 +106,22 @@ def precompute_summaries(_df: pl.DataFrame) -> dict:
         ["pickup_date", "pickup_hour", "payment_type", "PU_Zone"]
     ).agg(pl.len().alias("Trips"))
 
-    metrics_summary, zones_summary = pl.collect_all(
-        [metrics_lf, zones_lf]
+    distance_lf = lf.filter(
+        pl.col("trip_distance").is_between(0, 25)
+    ).with_columns(
+        (pl.col("trip_distance") / 0.625).floor().cast(pl.Int32).alias("dist_bin")
+    ).group_by(["pickup_date", "pickup_hour", "payment_type", "dist_bin"]).agg(
+        pl.len().alias("count")
+    )
+
+    metrics_summary, zones_summary, distance_summary = pl.collect_all(
+        [metrics_lf, zones_lf, distance_lf]
     )
 
     return {
-        "metrics": metrics_summary,
-        "zones":   zones_summary,
+        "metrics":  metrics_summary,
+        "zones":    zones_summary,
+        "distance": distance_summary,
     }
 
 
@@ -145,8 +155,9 @@ def filter_summary(tbl: pl.DataFrame) -> pl.DataFrame:
         (pl.col("payment_type").is_in(payment_types))
     )
 
-filtered_metrics = filter_summary(summaries["metrics"])
-filtered_zones   = filter_summary(summaries["zones"])
+filtered_metrics  = filter_summary(summaries["metrics"])
+filtered_zones    = filter_summary(summaries["zones"])
+filtered_distance = filter_summary(summaries["distance"])
 
 if filtered_metrics.is_empty():
     st.warning("No data for the selected filters.")
@@ -212,17 +223,20 @@ There is also a significant increase in fares from 2–4 PM which is probably du
 
 # Trip Distance Distribution
 st.subheader("Trip Distance Distribution (0–25 miles)")
+distance_raw = df.filter(
+    (pl.col("pickup_date") >= start_date) &
+    (pl.col("pickup_date") <= end_date) &
+    (pl.col("pickup_hour") >= hour_range[0]) &
+    (pl.col("pickup_hour") <= hour_range[1]) &
+    (pl.col("payment_type").is_in(payment_types)) &
+    (pl.col("trip_distance") <= 25)
+)
 fig3 = px.histogram(
-    df.filter(
-        (pl.col("pickup_date") >= start_date) &
-        (pl.col("pickup_date") <= end_date) &
-        (pl.col("pickup_hour") >= hour_range[0]) &
-        (pl.col("pickup_hour") <= hour_range[1]) &
-        (pl.col("payment_type").is_in(payment_types)) &
-        (pl.col("trip_distance").is_between(0, 25))
-    ),
-    x="trip_distance", nbins=40,
-    title="Trip Distance Distribution (0–25 miles)"
+    distance_raw.to_pandas(),
+    x="trip_distance",
+    nbins=40,
+    title="Trip Distance Distribution (0–25 miles)",
+    labels={"trip_distance": "Trip Distance (miles)", "count": "Count"},
 )
 st.plotly_chart(fig3, use_container_width=True)
 st.markdown("""
