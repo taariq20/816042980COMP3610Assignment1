@@ -3,7 +3,7 @@ NYC Yellow Taxi Trip Dashboard (January 2024)
 This project provides an interactive dashboard to explore NYC yellow taxi trips for January 2024.
 
 Deployed dashboard:
-dashboard url: https://taariq20-816042980comp3610assignment1-app-81ndgr.streamlit.app/
+dashboard url: https://taariq20-816042980comp3610assignment1-app-diud0i.streamlit.app/
 
 Setup instructions:
 
