@@ -190,7 +190,7 @@ top_zones = (
     .sort("Trips", descending=True)
 )
 fig1 = px.bar(
-    top_zones.to_pandas(),
+    top_zones,
     x="PU_Zone", y="Trips", color="Trips",
     title="Top 10 Pickup Zones by Trip Count"
 )
@@ -210,7 +210,7 @@ hourly_fare = (
     .sort("pickup_hour")
 )
 fig2 = px.line(
-    hourly_fare.to_pandas(),
+    hourly_fare,
     x="pickup_hour", y="avg_fare",
     markers=True,
     title="Average Fare by Hour of Day"
@@ -232,7 +232,7 @@ distance_raw = df.filter(
     (pl.col("trip_distance") <= 25)
 )
 fig3 = px.histogram(
-    distance_raw.to_pandas(),
+    distance_raw,
     x="trip_distance",
     nbins=40,
     title="Trip Distance Distribution (0–25 miles)",
@@ -251,7 +251,7 @@ payment_counts = (
     .agg(pl.col("trip_count").sum().alias("Count"))
 )
 fig4 = px.pie(
-    payment_counts.to_pandas(),
+    payment_counts,
     names="payment_type", values="Count",
     title="Payment Type Breakdown"
 )
@@ -276,7 +276,7 @@ heatmap_data = (
 )
 
 fig5 = px.density_heatmap(
-    heatmap_data.to_pandas(),
+    heatmap_data,
     x="pickup_hour", y="pickup_day_of_week", z="Trips",
     color_continuous_scale="Viridis",
     title="Trips by Day of Week and Hour",
